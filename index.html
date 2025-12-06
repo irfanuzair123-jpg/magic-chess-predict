@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Magic Chess: GO GO Predict</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700;800&family=Teko:wght@500;600;700&family=Black+Ops+One&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Rajdhani', 'sans-serif'],
+              display: ['Teko', 'sans-serif'],
+              arcade: ['"Black Ops One"', 'cursive'],
+            },
+            colors: {
+              kof: {
+                red: '#D92027',
+                darkRed: '#8B0000',
+                gold: '#FFD700',
+                orange: '#FF8C00',
+                purple: '#4B0082',
+                dark: '#0F0518',
+                panel: '#1A0B2E',
+              }
+            },
+            animation: {
+              'bounce-sm': 'bounce-sm 2s infinite',
+              'shine': 'shine 3s linear infinite',
+              'pulse-glow': 'pulse-glow 2s infinite',
+              'pop-in': 'pop-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+              'slide-up': 'slide-up 0.5s ease-out forwards',
+            },
+            keyframes: {
+              'bounce-sm': {
+                '0%, 100%': { transform: 'translateY(-2%)' },
+                '50%': { transform: 'translateY(0)' },
+              },
+              shine: {
+                '0%': { backgroundPosition: '200% center' },
+                '100%': { backgroundPosition: '-200% center' },
+              },
+              'pulse-glow': {
+                '0%, 100%': { boxShadow: '0 0 10px #FFD700, 0 0 20px #D92027' },
+                '50%': { boxShadow: '0 0 20px #FFD700, 0 0 40px #D92027' },
+              },
+              'pop-in': {
+                '0%': { opacity: '0', transform: 'scale(0.9) translateY(20px)' },
+                '100%': { opacity: '1', transform: 'scale(1) translateY(0)' },
+              },
+              'slide-up': {
+                '0%': { opacity: '0', transform: 'translateY(20px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              }
+            },
+            backgroundImage: {
+              'arcade-gradient': 'linear-gradient(to bottom, #2d1b4e, #0f0518)',
+              'gold-gradient': 'linear-gradient(180deg, #FFEC8B 0%, #FFD700 50%, #FFA500 100%)',
+              'red-gradient': 'linear-gradient(180deg, #FF4D4D 0%, #D92027 100%)',
+            }
+          },
+        },
+      }
+    </script>
+    <style>
+      body {
+        background-color: #0F0518;
+        color: #fff;
+        overflow-x: hidden;
+      }
+      
+      .bg-arena {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: radial-gradient(circle at 50% 0%, #4B0082 0%, #0F0518 70%);
+        z-index: -1;
+      }
+
+      .text-stroke {
+        -webkit-text-stroke: 1px #000;
+        text-shadow: 2px 2px 0px rgba(0,0,0,0.5);
+      }
+      
+      .text-stroke-lg {
+        -webkit-text-stroke: 2px #000;
+        text-shadow: 4px 4px 0px rgba(0,0,0,0.8);
+      }
+
+      /* Arcade Card Style */
+      .arcade-card {
+        background: linear-gradient(135deg, rgba(30,15,50,0.9), rgba(10,5,20,0.95));
+        border: 2px solid #D92027;
+        box-shadow: 0 0 15px rgba(217, 32, 39, 0.3);
+        border-radius: 12px;
+        position: relative;
+      }
+      
+      .arcade-card::before {
+        content: '';
+        position: absolute;
+        top: -2px; left: -2px; right: -2px; bottom: -2px;
+        background: linear-gradient(45deg, #D92027, transparent, #FFD700, transparent, #D92027);
+        z-index: -1;
+        border-radius: 14px;
+        opacity: 0.5;
+      }
+
+      .btn-hit {
+        background: linear-gradient(180deg, #FFF700 0%, #FFD700 40%, #FFA500 100%);
+        border: 3px solid #8B0000;
+        color: #8B0000;
+        text-shadow: 0px 1px 0px rgba(255,255,255,0.4);
+        box-shadow: 0 6px 0 #8B0000, 0 10px 10px rgba(0,0,0,0.5);
+        transition: all 0.1s;
+      }
+
+      .btn-hit:active {
+        transform: translateY(4px);
+        box-shadow: 0 2px 0 #8B0000, 0 4px 4px rgba(0,0,0,0.5);
+      }
+
+      .btn-next {
+        background: linear-gradient(180deg, #4B0082 0%, #2d1b4e 100%);
+        border: 2px solid #FFD700;
+        color: #FFD700;
+        box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        transition: all 0.2s;
+      }
+      .btn-next:hover {
+        background: #4B0082;
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+        transform: scale(1.05);
+      }
+
+      ::-webkit-scrollbar { width: 6px; }
+      ::-webkit-scrollbar-track { background: #0F0518; }
+      ::-webkit-scrollbar-thumb { background: #D92027; border-radius: 3px; }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.31.0",
+    "react": "https://aistudiocdn.com/react@^19.2.1",
+    "react/": "https://aistudiocdn.com/react@^19.2.1/",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.556.0"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>

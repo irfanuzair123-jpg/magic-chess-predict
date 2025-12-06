@@ -1,0 +1,5 @@
+{
+  "name": "Magic Chess Go Go Predictor",
+  "description": "A predictive tool for Magic Chess Go Go matches using Gemini AI to analyze patterns and forecast upcoming opponents.",
+  "requestFramePermissions": []
+}
